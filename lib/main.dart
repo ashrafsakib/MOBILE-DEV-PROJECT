@@ -1,10 +1,14 @@
+import 'package:abroadready/core/navigation/app_router.dart';
+import 'package:abroadready/core/navigation/app_routes.dart';
+import 'package:abroadready/core/theme/app_theme.dart';
 import 'package:abroadready/firebase_options.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 void main() async {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -15,35 +19,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'AbroadReady',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const HomeScreen(),
-    );
-  }
-}
-
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('AbroadReady', style: TextStyle(fontSize: 30)),
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: () {}, child: const Text('Hello')),
-          ],
-        ),
-      ),
+      theme: AppTheme.abroadReadyTheme,
+      initialRoute: AppRoutes.splash,
+      onGenerateRoute: AppRouter.onGenerateRoute,
     );
   }
 }
