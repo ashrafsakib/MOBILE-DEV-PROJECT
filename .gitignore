@@ -43,3 +43,4 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+abroadready-firebase-adminsdk-fbsvc-9f843ab74f.json
