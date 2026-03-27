@@ -1,3 +1,4 @@
+import 'package:abroadready/core/di/injection_container.dart';
 import 'package:abroadready/core/navigation/app_router.dart';
 import 'package:abroadready/core/navigation/app_routes.dart';
 import 'package:abroadready/core/theme/app_theme.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await setupDependencies();
   runApp(const MyApp());
 }
 
