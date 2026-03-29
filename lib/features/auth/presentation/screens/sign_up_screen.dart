@@ -1,8 +1,10 @@
+import 'package:abroadready/core/di/service_locator.dart';
 import 'package:abroadready/core/navigation/app_routes.dart';
 import 'package:abroadready/core/theme/app_colors.dart';
 import 'package:abroadready/core/widgets/ar_label.dart';
 import 'package:abroadready/core/widgets/ar_primary_button.dart';
 import 'package:abroadready/core/widgets/ar_text_field.dart';
+import 'package:abroadready/features/auth/data/services/auth_service.dart';
 import 'package:abroadready/features/auth/presentation/widgets/auth_header.dart';
 import 'package:abroadready/features/auth/presentation/widgets/auth_screen_scaffold.dart';
 import 'package:abroadready/features/auth/presentation/widgets/social_auth_section.dart';
@@ -16,13 +18,93 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  static final RegExp _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthService _authService = sl<AuthService>();
 
   bool _obscurePassword = true;
   bool _acceptedTerms = false;
+  bool _isLoading = false;
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await _authService.signInWithGoogle();
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_authService.readableErrorMessage(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleGithubSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await _authService.signInWithGithub();
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_authService.readableErrorMessage(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleCreateAccount() async {
+    FocusScope.of(context).unfocus();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please accept Terms of Service and Privacy Policy.'),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.createUserWithEmailAndPassword(
+        fullName: _fullNameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account created successfully.')),
+      );
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_authService.readableErrorMessage(error))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -72,6 +154,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
                   return 'Email is required';
+                }
+                if (!_emailRegex.hasMatch(value.trim())) {
+                  return 'Enter a valid email address';
                 }
                 return null;
               },
@@ -152,17 +237,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
             const SizedBox(height: 8),
             ArPrimaryButton(
               label: 'Create Account',
-              onPressed: () {
-                FocusScope.of(context).unfocus();
-                if (!(_formKey.currentState?.validate() ?? false)) return;
-                if (!_acceptedTerms) return;
-              },
+              isLoading: _isLoading,
+              onPressed: _isLoading ? null : _handleCreateAccount,
             ),
             const SizedBox(height: 20),
             SocialAuthSection(
               label: 'OR SIGN UP WITH',
-              onGoogleTap: () {},
-              onGithubTap: () {},
+              onGoogleTap: _isLoading ? () {} : _handleGoogleSignIn,
+              onGithubTap: _isLoading ? () {} : _handleGithubSignIn,
             ),
             const SizedBox(height: 22),
             Center(

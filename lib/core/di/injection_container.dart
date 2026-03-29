@@ -1,3 +1,4 @@
+import 'package:abroadready/features/auth/data/services/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -17,7 +18,9 @@ void _registerExternalDependencies() {
 }
 
 void _registerDataSources() {
-  // Add remote/local data source registrations here.
+  sl.registerLazySingleton<AuthService>(
+    () => AuthService(firebaseAuth: sl(), firestore: sl()),
+  );
 }
 
 void _registerRepositories() {

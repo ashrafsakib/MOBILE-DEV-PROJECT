@@ -1,8 +1,10 @@
+import 'package:abroadready/core/di/service_locator.dart';
 import 'package:abroadready/core/navigation/app_routes.dart';
 import 'package:abroadready/core/theme/app_colors.dart';
 import 'package:abroadready/core/widgets/ar_label.dart';
 import 'package:abroadready/core/widgets/ar_primary_button.dart';
 import 'package:abroadready/core/widgets/ar_text_field.dart';
+import 'package:abroadready/features/auth/data/services/auth_service.dart';
 import 'package:abroadready/features/auth/presentation/widgets/auth_header.dart';
 import 'package:abroadready/features/auth/presentation/widgets/auth_screen_scaffold.dart';
 import 'package:abroadready/features/auth/presentation/widgets/social_auth_section.dart';
@@ -17,10 +19,117 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  static final RegExp _emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final AuthService _authService = sl<AuthService>();
+
   bool _obscurePassword = true;
+  bool _isLoading = false;
+
+  Future<void> _handleForgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter your email to reset password.')),
+      );
+      return;
+    }
+    if (!_emailRegex.hasMatch(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Enter a valid email address.')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password reset email sent.')),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_authService.readableErrorMessage(error))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await _authService.signInWithGoogle();
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_authService.readableErrorMessage(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleGithubSignIn() async {
+    setState(() => _isLoading = true);
+    try {
+      await _authService.signInWithGithub();
+      if (!mounted) return;
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_authService.readableErrorMessage(error))),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleSignIn() async {
+    FocusScope.of(context).unfocus();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Login successful.')));
+      Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(_authService.readableErrorMessage(error))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -67,6 +176,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 if (value == null || value.trim().isEmpty) {
                   return 'Email is required';
                 }
+                if (!_emailRegex.hasMatch(value.trim())) {
+                  return 'Enter a valid email address';
+                }
                 return null;
               },
             ),
@@ -76,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const ArLabel('Password'),
                 const Spacer(),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: _isLoading ? null : _handleForgotPassword,
                   child: Text(
                     'Forgot password?',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -114,15 +226,14 @@ class _LoginScreenState extends State<LoginScreen> {
             const SizedBox(height: 20),
             ArPrimaryButton(
               label: 'Sign In',
-              onPressed: () {
-                if (_formKey.currentState?.validate() ?? false) {}
-              },
+              isLoading: _isLoading,
+              onPressed: _isLoading ? null : _handleSignIn,
             ),
             const SizedBox(height: 20),
             SocialAuthSection(
               label: 'OR CONTINUE WITH',
-              onGoogleTap: () {},
-              onGithubTap: () {},
+              onGoogleTap: _isLoading ? () {} : _handleGoogleSignIn,
+              onGithubTap: _isLoading ? () {} : _handleGithubSignIn,
             ),
             const SizedBox(height: 22),
             Center(
