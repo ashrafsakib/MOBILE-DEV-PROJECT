@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:abroadready/core/di/service_locator.dart';
 import 'package:abroadready/core/navigation/app_routes.dart';
 import 'package:abroadready/core/theme/app_colors.dart';
+import 'package:abroadready/features/auth/data/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -13,15 +15,20 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  final AuthService _authService = sl<AuthService>();
+
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 2), _goToWelcome);
+    Timer(const Duration(seconds: 2), _goToNextScreen);
   }
 
-  void _goToWelcome() {
+  void _goToNextScreen() {
     if (!mounted) return;
-    Navigator.of(context).pushReplacementNamed(AppRoutes.welcome);
+    final nextRoute = _authService.isSignedIn
+        ? AppRoutes.home
+        : AppRoutes.welcome;
+    Navigator.of(context).pushReplacementNamed(nextRoute);
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:abroadready/core/navigation/app_routes.dart';
 import 'package:abroadready/features/auth/presentation/screens/login_screen.dart';
 import 'package:abroadready/features/auth/presentation/screens/sign_up_screen.dart';
+import 'package:abroadready/features/home/presentation/screens/home_screen.dart';
 import 'package:abroadready/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:abroadready/features/splash/presentation/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,8 @@ class AppRouter {
     switch (settings.name) {
       case AppRoutes.welcome:
         return _page(const WelcomeScreen(), settings);
+      case AppRoutes.home:
+        return _page(const HomeScreen(), settings);
       case AppRoutes.login:
         return _page(const LoginScreen(), settings);
       case AppRoutes.signUp:
