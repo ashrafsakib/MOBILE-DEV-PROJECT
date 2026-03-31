@@ -4,6 +4,7 @@ import 'package:abroadready/core/di/service_locator.dart';
 import 'package:abroadready/core/navigation/app_routes.dart';
 import 'package:abroadready/core/theme/app_colors.dart';
 import 'package:abroadready/features/auth/data/services/auth_service.dart';
+import 'package:abroadready/features/profile_setup/domain/usecases/is_current_user_profile_completed_usecase.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
@@ -16,6 +17,8 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   final AuthService _authService = sl<AuthService>();
+  final IsCurrentUserProfileCompletedUseCase _isProfileCompletedUseCase =
+      sl<IsCurrentUserProfileCompletedUseCase>();
 
   @override
   void initState() {
@@ -23,11 +26,16 @@ class _SplashScreenState extends State<SplashScreen> {
     Timer(const Duration(seconds: 2), _goToNextScreen);
   }
 
-  void _goToNextScreen() {
+  Future<void> _goToNextScreen() async {
     if (!mounted) return;
-    final nextRoute = _authService.isSignedIn
-        ? AppRoutes.home
-        : AppRoutes.welcome;
+
+    var nextRoute = AppRoutes.welcome;
+    if (_authService.isSignedIn) {
+      final isCompleted = await _isProfileCompletedUseCase();
+      nextRoute = isCompleted ? AppRoutes.home : AppRoutes.profileSetup;
+    }
+
+    if (!mounted) return;
     Navigator.of(context).pushReplacementNamed(nextRoute);
   }
 
