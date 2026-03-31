@@ -1,4 +1,11 @@
 import 'package:abroadready/features/auth/data/services/auth_service.dart';
+import 'package:abroadready/features/profile_setup/data/datasources/profile_setup_remote_data_source.dart';
+import 'package:abroadready/features/profile_setup/data/repositories/profile_setup_repository_impl.dart';
+import 'package:abroadready/features/profile_setup/domain/repositories/profile_setup_repository.dart';
+import 'package:abroadready/features/profile_setup/domain/usecases/get_current_user_profile_usecase.dart';
+import 'package:abroadready/features/profile_setup/domain/usecases/is_current_user_profile_completed_usecase.dart';
+import 'package:abroadready/features/profile_setup/domain/usecases/save_current_user_profile_usecase.dart';
+import 'package:abroadready/features/profile_setup/presentation/bloc/profile_setup_bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -21,16 +28,35 @@ void _registerDataSources() {
   sl.registerLazySingleton<AuthService>(
     () => AuthService(firebaseAuth: sl(), firestore: sl()),
   );
+  sl.registerLazySingleton<ProfileSetupRemoteDataSource>(
+    () => ProfileSetupRemoteDataSource(firestore: sl()),
+  );
 }
 
 void _registerRepositories() {
-  // Add repository registrations here.
+  sl.registerLazySingleton<ProfileSetupRepository>(
+    () =>
+        ProfileSetupRepositoryImpl(firebaseAuth: sl(), remoteDataSource: sl()),
+  );
 }
 
 void _registerUseCases() {
-  // Add use case registrations here.
+  sl.registerLazySingleton<GetCurrentUserProfileUseCase>(
+    () => GetCurrentUserProfileUseCase(sl()),
+  );
+  sl.registerLazySingleton<SaveCurrentUserProfileUseCase>(
+    () => SaveCurrentUserProfileUseCase(sl()),
+  );
+  sl.registerLazySingleton<IsCurrentUserProfileCompletedUseCase>(
+    () => IsCurrentUserProfileCompletedUseCase(sl()),
+  );
 }
 
 void _registerPresentationLayer() {
-  // Add state management registrations here.
+  sl.registerFactory<ProfileSetupBloc>(
+    () => ProfileSetupBloc(
+      getCurrentUserProfileUseCase: sl(),
+      saveCurrentUserProfileUseCase: sl(),
+    ),
+  );
 }

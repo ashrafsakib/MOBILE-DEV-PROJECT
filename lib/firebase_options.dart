@@ -63,6 +63,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '870222148541',
     projectId: 'abroadready',
     storageBucket: 'abroadready.firebasestorage.app',
+    iosClientId: '870222148541-87jd354qeme8o4j9mp0fcoi94a4sbktg.apps.googleusercontent.com',
     iosBundleId: 'com.example.abroadready',
   );
+
 }

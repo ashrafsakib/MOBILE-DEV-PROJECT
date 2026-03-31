@@ -2,6 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+<key>CFBundleURLTypes</key>
+<array>
+    <dict>
+        <key>CFBundleIdentifier</key>
+		<string>com.example.abroadready</string>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+			<string>com.googleusercontent.apps.870222148541-87jd354qeme8o4j9mp0fcoi94a4sbktg</string>
+			<string>app-1-870222148541-ios-18fe16ec3994d205ed18d4</string>
+        </array>
+    </dict>
+</array>
+
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

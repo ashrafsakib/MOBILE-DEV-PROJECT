@@ -3,6 +3,7 @@ import 'package:abroadready/features/auth/presentation/screens/login_screen.dart
 import 'package:abroadready/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:abroadready/features/home/presentation/screens/home_screen.dart';
 import 'package:abroadready/features/onboarding/presentation/screens/welcome_screen.dart';
+import 'package:abroadready/features/profile_setup/presentation/screens/profile_setup_screen.dart';
 import 'package:abroadready/features/splash/presentation/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -19,6 +20,8 @@ class AppRouter {
         return _page(const LoginScreen(), settings);
       case AppRoutes.signUp:
         return _page(const SignUpScreen(), settings);
+      case AppRoutes.profileSetup:
+        return _page(const ProfileSetupScreen(), settings);
       case AppRoutes.splash:
       default:
         return _page(const SplashScreen(), settings);

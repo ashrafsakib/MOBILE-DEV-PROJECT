@@ -8,6 +8,7 @@ import 'package:abroadready/features/auth/data/services/auth_service.dart';
 import 'package:abroadready/features/auth/presentation/widgets/auth_header.dart';
 import 'package:abroadready/features/auth/presentation/widgets/auth_screen_scaffold.dart';
 import 'package:abroadready/features/auth/presentation/widgets/social_auth_section.dart';
+import 'package:abroadready/features/profile_setup/domain/usecases/is_current_user_profile_completed_usecase.dart';
 import 'package:flutter/material.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -25,19 +26,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final AuthService _authService = sl<AuthService>();
+  final IsCurrentUserProfileCompletedUseCase _isProfileCompletedUseCase =
+      sl<IsCurrentUserProfileCompletedUseCase>();
 
   bool _obscurePassword = true;
   bool _acceptedTerms = false;
   bool _isLoading = false;
 
+  Future<String> _resolvePostSignInRoute() async {
+    final isCompleted = await _isProfileCompletedUseCase();
+    return isCompleted ? AppRoutes.home : AppRoutes.profileSetup;
+  }
+
   Future<void> _handleGoogleSignIn() async {
     setState(() => _isLoading = true);
     try {
       await _authService.signInWithGoogle();
+      final route = await _resolvePostSignInRoute();
       if (!mounted) return;
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+      Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -52,10 +59,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     setState(() => _isLoading = true);
     try {
       await _authService.signInWithGithub();
+      final route = await _resolvePostSignInRoute();
       if (!mounted) return;
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+      Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -86,14 +92,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      final route = await _resolvePostSignInRoute();
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Account created successfully.')),
       );
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil(AppRoutes.home, (route) => false);
+      Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
