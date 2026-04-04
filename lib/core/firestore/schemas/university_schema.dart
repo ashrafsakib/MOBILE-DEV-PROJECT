@@ -56,18 +56,20 @@ class UniversityEntity {
 
   factory UniversityEntity.fromMap(Map<String, dynamic> map) {
     return UniversityEntity(
-      id: map['id'] as String,
-      name: map['name'] as String,
-      country: map['country'] as String,
-      city: map['city'] as String,
-      region: map['region'] as String,
-      rankingQs: map['rankingQs'] as int,
-      rankingTimes: map['rankingTimes'] as int,
-      livingCostPerMonthEur: map['livingCostPerMonthEur'] as int,
-      countryKey: map['countryKey'] as String,
-      cityKey: map['cityKey'] as String,
-      regionKey: map['regionKey'] as String,
-      searchTokens: List<String>.from(map['searchTokens'] as List<dynamic>),
+      id: (map['id'] as String? ?? '').trim(),
+      name: (map['name'] as String? ?? '').trim(),
+      country: (map['country'] as String? ?? '').trim(),
+      city: (map['city'] as String? ?? '').trim(),
+      region: (map['region'] as String? ?? '').trim(),
+      rankingQs: _toIntFromAny(map['rankingQs']),
+      rankingTimes: _toIntFromAny(map['rankingTimes']),
+      livingCostPerMonthEur: _toIntFromAny(map['livingCostPerMonthEur']),
+      countryKey: (map['countryKey'] as String? ?? '').trim(),
+      cityKey: (map['cityKey'] as String? ?? '').trim(),
+      regionKey: (map['regionKey'] as String? ?? '').trim(),
+      searchTokens: List<String>.from(
+        map['searchTokens'] as List<dynamic>? ?? [],
+      ),
     );
   }
 
@@ -90,6 +92,19 @@ class UniversityEntity {
 
   static int _toInt(String? value) {
     return int.tryParse((value ?? '').trim()) ?? 0;
+  }
+
+  static int _toIntFromAny(Object? value) {
+    if (value is int) {
+      return value;
+    }
+    if (value is num) {
+      return value.toInt();
+    }
+    if (value is String) {
+      return int.tryParse(value.trim()) ?? 0;
+    }
+    return 0;
   }
 
   static String _universityBaseId(String rowId) {
