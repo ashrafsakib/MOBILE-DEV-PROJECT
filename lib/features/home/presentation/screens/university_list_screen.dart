@@ -5,17 +5,18 @@ import 'package:abroadready/features/home/data/services/university_service.dart'
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class UniversityListScreen extends StatefulWidget {
+  const UniversityListScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<UniversityListScreen> createState() => _UniversityListScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _UniversityListScreenState extends State<UniversityListScreen> {
   final UniversityService _universityService = sl<UniversityService>();
+  final TextEditingController _searchController = TextEditingController();
 
-  int _selectedTabIndex = 0;
+  String _searchQuery = '';
   int _selectedTrack = 0;
 
   static const List<String> _tracks = <String>[
@@ -24,6 +25,26 @@ class _HomeScreenState extends State<HomeScreen> {
     'Engineering',
     'Business',
   ];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<UniversityEntity> _applySearch(List<UniversityEntity> universities) {
+    if (_searchQuery.trim().isEmpty) {
+      return universities;
+    }
+
+    final query = _searchQuery.trim().toLowerCase();
+    return universities.where((university) {
+      return university.name.toLowerCase().contains(query) ||
+          university.city.toLowerCase().contains(query) ||
+          university.country.toLowerCase().contains(query) ||
+          university.searchTokens.any((token) => token.contains(query));
+    }).toList();
+  }
 
   int _scoreFor(UniversityEntity university) {
     final rankingScore = university.rankingQs > 0
@@ -38,183 +59,133 @@ class _HomeScreenState extends State<HomeScreen> {
     return (rankingScore * 0.62 + costScore * 0.38).round().clamp(62, 97);
   }
 
-  Widget _buildExploreTab() {
-    return SafeArea(
-      child: StreamBuilder<List<UniversityEntity>>(
-        stream: _universityService.watchUniversities(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Text(
-                  'Could not load universities. Please try again.',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
-
-          final universities = snapshot.data ?? const <UniversityEntity>[];
-          final filtered = List<UniversityEntity>.from(universities)
-            ..sort((a, b) => _scoreFor(b).compareTo(_scoreFor(a)));
-
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-                child: _ExploreTopBar(
-                  onProfileTap: () {
-                    Navigator.of(context).pushNamed(AppRoutes.profile);
-                  },
-                ),
-              ),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        Navigator.of(
-                          context,
-                        ).pushNamed(AppRoutes.universitySearch);
-                      },
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFEDEFF7),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Row(
-                          children: [
-                            Icon(
-                              Icons.search_rounded,
-                              color: Color(0xFF7A819D),
-                            ),
-                            SizedBox(width: 10),
-                            Text(
-                              'Search universities...',
-                              style: TextStyle(
-                                color: Color(0xFF9097B0),
-                                fontSize: 15,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: List.generate(_tracks.length, (index) {
-                          final selected = _selectedTrack == index;
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              right: index == _tracks.length - 1 ? 0 : 8,
-                            ),
-                            child: _TrackChip(
-                              label: _tracks[index],
-                              selected: selected,
-                              onTap: () =>
-                                  setState(() => _selectedTrack = index),
-                            ),
-                          );
-                        }),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (filtered.isEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 28),
-                        child: Text(
-                          'No universities found for your search.',
-                          style: Theme.of(context).textTheme.bodyLarge,
-                          textAlign: TextAlign.center,
-                        ),
-                      )
-                    else
-                      ...filtered.map(
-                        (university) => Padding(
-                          padding: const EdgeInsets.only(bottom: 14),
-                          child: _UniversityCard(university: university),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FC),
-      body: IndexedStack(
-        index: _selectedTabIndex,
-        children: [
-          _buildExploreTab(),
-          const _TabPlaceholder(title: 'Matches'),
-          const _TabPlaceholder(title: 'Documents'),
-          const _TabPlaceholder(title: 'Reminders'),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedTabIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedTabIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(CupertinoIcons.compass),
-            selectedIcon: Icon(CupertinoIcons.compass_fill),
-            label: 'Explore',
-          ),
-          NavigationDestination(
-            icon: Icon(CupertinoIcons.heart),
-            selectedIcon: Icon(CupertinoIcons.heart_fill),
-            label: 'Matches',
-          ),
-          NavigationDestination(
-            icon: Icon(CupertinoIcons.doc_text),
-            selectedIcon: Icon(CupertinoIcons.doc_text_fill),
-            label: 'Documents',
-          ),
-          NavigationDestination(
-            icon: Icon(CupertinoIcons.bell),
-            selectedIcon: Icon(CupertinoIcons.bell_fill),
-            label: 'Reminders',
-          ),
-        ],
+      body: SafeArea(
+        child: StreamBuilder<List<UniversityEntity>>(
+          stream: _universityService.watchUniversities(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            if (snapshot.hasError) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Text(
+                    'Could not load universities. Please try again.',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              );
+            }
+
+            final universities = snapshot.data ?? const <UniversityEntity>[];
+            final filtered = _applySearch(universities)
+              ..sort((a, b) => _scoreFor(b).compareTo(_scoreFor(a)));
+
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                  child: _ListTopBar(onBack: () => Navigator.of(context).pop()),
+                ),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                    children: [
+                      TextField(
+                        controller: _searchController,
+                        onChanged: (value) =>
+                            setState(() => _searchQuery = value),
+                        decoration: InputDecoration(
+                          hintText: 'Search universities...',
+                          prefixIcon: const Icon(Icons.search_rounded),
+                          filled: true,
+                          fillColor: const Color(0xFFEDEFF7),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 14,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: List.generate(_tracks.length, (index) {
+                            final selected = _selectedTrack == index;
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                right: index == _tracks.length - 1 ? 0 : 8,
+                              ),
+                              child: _TrackChip(
+                                label: _tracks[index],
+                                selected: selected,
+                                onTap: () =>
+                                    setState(() => _selectedTrack = index),
+                              ),
+                            );
+                          }),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      if (filtered.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 28),
+                          child: Text(
+                            'No universities found for your search.',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                            textAlign: TextAlign.center,
+                          ),
+                        )
+                      else
+                        ...filtered.map(
+                          (university) => Padding(
+                            padding: const EdgeInsets.only(bottom: 14),
+                            child: _ListUniversityCard(university: university),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-class _ExploreTopBar extends StatelessWidget {
-  const _ExploreTopBar({required this.onProfileTap});
+class _ListTopBar extends StatelessWidget {
+  const _ListTopBar({required this.onBack});
 
-  final VoidCallback onProfileTap;
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
+        IconButton(
+          onPressed: onBack,
+          style: IconButton.styleFrom(
+            backgroundColor: const Color(0xFFEAECF8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+        ),
+        const SizedBox(width: 8),
         const Expanded(
           child: Text(
             'AbroadReady',
@@ -226,14 +197,10 @@ class _ExploreTopBar extends StatelessWidget {
             ),
           ),
         ),
-        InkWell(
-          onTap: onProfileTap,
-          borderRadius: BorderRadius.circular(20),
-          child: const CircleAvatar(
-            radius: 16,
-            backgroundColor: Color(0xFFF1D7BC),
-            child: Icon(Icons.person, size: 16, color: Color(0xFF312D42)),
-          ),
+        const CircleAvatar(
+          radius: 16,
+          backgroundColor: Color(0xFFF1D7BC),
+          child: Icon(Icons.person, size: 16, color: Color(0xFF312D42)),
         ),
       ],
     );
@@ -275,8 +242,8 @@ class _TrackChip extends StatelessWidget {
   }
 }
 
-class _UniversityCard extends StatelessWidget {
-  const _UniversityCard({required this.university});
+class _ListUniversityCard extends StatelessWidget {
+  const _ListUniversityCard({required this.university});
 
   final UniversityEntity university;
 
@@ -374,9 +341,9 @@ class _UniversityCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'A world-renowned institution with strong programs and international pathways for future-focused students.',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF7D85A1),
                   height: 1.3,
@@ -405,22 +372,6 @@ class _UniversityCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _TabPlaceholder extends StatelessWidget {
-  const _TabPlaceholder({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        '$title Screen',
-        style: Theme.of(context).textTheme.titleLarge,
       ),
     );
   }
