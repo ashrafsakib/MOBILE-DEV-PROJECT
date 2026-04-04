@@ -1,4 +1,5 @@
 import 'package:abroadready/features/auth/data/services/auth_service.dart';
+import 'package:abroadready/features/home/data/services/university_service.dart';
 import 'package:abroadready/features/profile_setup/data/datasources/profile_setup_remote_data_source.dart';
 import 'package:abroadready/features/profile_setup/data/repositories/profile_setup_repository_impl.dart';
 import 'package:abroadready/features/profile_setup/domain/repositories/profile_setup_repository.dart';
@@ -30,6 +31,9 @@ void _registerDataSources() {
   );
   sl.registerLazySingleton<ProfileSetupRemoteDataSource>(
     () => ProfileSetupRemoteDataSource(firestore: sl()),
+  );
+  sl.registerLazySingleton<UniversityService>(
+    () => UniversityService(firestore: sl()),
   );
 }
 
