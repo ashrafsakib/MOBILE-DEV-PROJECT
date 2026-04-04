@@ -1,5 +1,10 @@
 import 'package:abroadready/features/auth/data/services/auth_service.dart';
 import 'package:abroadready/features/home/data/services/university_service.dart';
+import 'package:abroadready/features/matches/data/datasources/matches_data_source.dart';
+import 'package:abroadready/features/matches/data/repositories/matches_repository_impl.dart';
+import 'package:abroadready/features/matches/domain/repositories/matches_repository.dart';
+import 'package:abroadready/features/matches/domain/usecases/get_university_matches_usecase.dart';
+import 'package:abroadready/features/matches/presentation/bloc/matches_bloc.dart';
 import 'package:abroadready/features/profile_setup/data/datasources/profile_setup_remote_data_source.dart';
 import 'package:abroadready/features/profile_setup/data/repositories/profile_setup_repository_impl.dart';
 import 'package:abroadready/features/profile_setup/domain/repositories/profile_setup_repository.dart';
@@ -44,6 +49,12 @@ void _registerDataSources() {
   sl.registerLazySingleton<UniversitySearchDataSource>(
     () => UniversitySearchDataSource(universityService: sl()),
   );
+  sl.registerLazySingleton<MatchesDataSource>(
+    () => MatchesDataSource(
+      universityService: sl(),
+      profileSetupRepository: sl(),
+    ),
+  );
 }
 
 void _registerRepositories() {
@@ -53,6 +64,9 @@ void _registerRepositories() {
   );
   sl.registerLazySingleton<UniversitySearchRepository>(
     () => UniversitySearchRepositoryImpl(dataSource: sl()),
+  );
+  sl.registerLazySingleton<MatchesRepository>(
+    () => MatchesRepositoryImpl(dataSource: sl()),
   );
 }
 
@@ -72,6 +86,9 @@ void _registerUseCases() {
   sl.registerLazySingleton<GetCountryFiltersUseCase>(
     () => GetCountryFiltersUseCase(sl()),
   );
+  sl.registerLazySingleton<GetUniversityMatchesUseCase>(
+    () => GetUniversityMatchesUseCase(sl()),
+  );
 }
 
 void _registerPresentationLayer() {
@@ -86,5 +103,8 @@ void _registerPresentationLayer() {
       searchUniversitiesUseCase: sl(),
       getCountryFiltersUseCase: sl(),
     ),
+  );
+  sl.registerFactory<MatchesBloc>(
+    () => MatchesBloc(getUniversityMatchesUseCase: sl()),
   );
 }
