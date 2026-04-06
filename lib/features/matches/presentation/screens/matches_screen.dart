@@ -90,10 +90,7 @@ class _MatchesView extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                const Text(
-                  'Recommended universities based on your profile and preferences.',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF737C98)),
-                ),
+
                 const SizedBox(height: 14),
                 ...matches.map(
                   (match) => Padding(
@@ -149,6 +146,7 @@ class _MatchUniversityCard extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Align(
                         alignment: Alignment.topLeft,
