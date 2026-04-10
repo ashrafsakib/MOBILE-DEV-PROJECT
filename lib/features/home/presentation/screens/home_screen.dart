@@ -2,6 +2,7 @@ import 'package:abroadready/core/di/service_locator.dart';
 import 'package:abroadready/core/firestore/schemas/university_schema.dart';
 import 'package:abroadready/core/navigation/app_routes.dart';
 import 'package:abroadready/features/home/data/services/university_service.dart';
+import 'package:abroadready/features/home/presentation/screens/documents_screen.dart';
 import 'package:abroadready/features/matches/presentation/screens/matches_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -169,7 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildExploreTab(),
           const MatchesScreen(),
-          const _TabPlaceholder(title: 'Documents'),
+          const DocumentsScreen(),
           const _TabPlaceholder(title: 'Reminders'),
         ],
       ),

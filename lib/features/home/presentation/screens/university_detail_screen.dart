@@ -1,11 +1,73 @@
+import 'package:abroadready/core/di/service_locator.dart';
 import 'package:abroadready/core/firestore/schemas/university_schema.dart';
+import 'package:abroadready/features/home/data/services/university_application_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-class UniversityDetailScreen extends StatelessWidget {
+class UniversityDetailScreen extends StatefulWidget {
   const UniversityDetailScreen({super.key, required this.university});
 
   final UniversityEntity university;
+
+  @override
+  State<UniversityDetailScreen> createState() => _UniversityDetailScreenState();
+}
+
+class _UniversityDetailScreenState extends State<UniversityDetailScreen> {
+  final UniversityApplicationService _applicationService =
+      sl<UniversityApplicationService>();
+
+  int _selectedTabIndex = 0;
+  late final Future<List<String>> _requiredDocumentsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _requiredDocumentsFuture = _applicationService
+        .getRequiredDocumentsForUniversity(widget.university.id);
+  }
+
+  Future<void> _onApplyPressed() async {
+    try {
+      await _applicationService.applyToUniversity(widget.university);
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Application started. Your checklist is now available in Documents.',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('$error')));
+    }
+  }
+
+  Widget _buildTabContent() {
+    switch (_selectedTabIndex) {
+      case 0:
+        return _OverviewTab(university: widget.university);
+      case 1:
+        return _RequirementsTab(
+          requiredDocumentsFuture: _requiredDocumentsFuture,
+        );
+      case 2:
+        return _CostsTab(university: widget.university);
+      case 3:
+        return const _DatesTab();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,54 +81,35 @@ class UniversityDetailScreen extends StatelessWidget {
             children: [
               const _TopBar(),
               const SizedBox(height: 14),
-              _HeroPanel(university: university),
+              _HeroPanel(university: widget.university),
               const SizedBox(height: 14),
-              const _TabStrip(),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _onApplyPressed,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFF4B47DB),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size.fromHeight(48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.school_rounded, size: 18),
+                  label: const Text('Apply To University'),
+                ),
+              ),
+              const SizedBox(height: 14),
+              _TabStrip(
+                selectedIndex: _selectedTabIndex,
+                onSelected: (index) {
+                  setState(() {
+                    _selectedTabIndex = index;
+                  });
+                },
+              ),
               const SizedBox(height: 16),
-              _InfoGrid(university: university),
-              const SizedBox(height: 24),
-              const Text(
-                'Program Overview',
-                style: TextStyle(
-                  fontSize: 31,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                  color: Color(0xFF151A2A),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'The ${university.name} experience combines academic rigor with strong global exposure. '
-                'Located in ${university.city}, this destination offers practical pathways for international students '
-                'with focused mentoring, applied projects, and industry-relevant outcomes.',
-                style: const TextStyle(
-                  fontSize: 15,
-                  height: 1.45,
-                  color: Color(0xFF606784),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: _FactCard(
-                      title: 'QS Ranking',
-                      value: university.rankingQs > 0
-                          ? '#${university.rankingQs}'
-                          : 'N/A',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _FactCard(
-                      title: 'Living Cost',
-                      value: university.livingCostPerMonthEur > 0
-                          ? '€${university.livingCostPerMonthEur}/mo'
-                          : 'N/A',
-                    ),
-                  ),
-                ],
-              ),
+              _buildTabContent(),
             ],
           ),
         ),
@@ -183,7 +226,10 @@ class _HeroPanel extends StatelessWidget {
 }
 
 class _TabStrip extends StatelessWidget {
-  const _TabStrip();
+  const _TabStrip({required this.selectedIndex, required this.onSelected});
+
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -194,11 +240,27 @@ class _TabStrip extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
-        children: const [
-          _TabItem(label: 'Overview', selected: true),
-          _TabItem(label: 'Requirements'),
-          _TabItem(label: 'Costs'),
-          _TabItem(label: 'Dates'),
+        children: [
+          _TabItem(
+            label: 'Overview',
+            selected: selectedIndex == 0,
+            onTap: () => onSelected(0),
+          ),
+          _TabItem(
+            label: 'Requirements',
+            selected: selectedIndex == 1,
+            onTap: () => onSelected(1),
+          ),
+          _TabItem(
+            label: 'Costs',
+            selected: selectedIndex == 2,
+            onTap: () => onSelected(2),
+          ),
+          _TabItem(
+            label: 'Dates',
+            selected: selectedIndex == 3,
+            onTap: () => onSelected(3),
+          ),
         ],
       ),
     );
@@ -206,29 +268,221 @@ class _TabStrip extends StatelessWidget {
 }
 
 class _TabItem extends StatelessWidget {
-  const _TabItem({required this.label, this.selected = false});
+  const _TabItem({
+    required this.label,
+    required this.onTap,
+    this.selected = false,
+  });
 
   final String label;
   final bool selected;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFEDEFFC) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            color: selected ? const Color(0xFF3E45C9) : const Color(0xFF747C99),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFEDEFFC) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              color: selected
+                  ? const Color(0xFF3E45C9)
+                  : const Color(0xFF747C99),
+            ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _OverviewTab extends StatelessWidget {
+  const _OverviewTab({required this.university});
+
+  final UniversityEntity university;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _InfoGrid(university: university),
+        const SizedBox(height: 24),
+        const Text(
+          'Program Overview',
+          style: TextStyle(
+            fontSize: 31,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            color: Color(0xFF151A2A),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'The ${university.name} experience combines academic rigor with strong global exposure. '
+          'Located in ${university.city}, this destination offers practical pathways for international students '
+          'with focused mentoring, applied projects, and industry-relevant outcomes.',
+          style: const TextStyle(
+            fontSize: 15,
+            height: 1.45,
+            color: Color(0xFF606784),
+          ),
+        ),
+        const SizedBox(height: 20),
+        Row(
+          children: [
+            Expanded(
+              child: _FactCard(
+                title: 'QS Ranking',
+                value: university.rankingQs > 0
+                    ? '#${university.rankingQs}'
+                    : 'N/A',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _FactCard(
+                title: 'Living Cost',
+                value: university.livingCostPerMonthEur > 0
+                    ? '€${university.livingCostPerMonthEur}/mo'
+                    : 'N/A',
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _RequirementsTab extends StatelessWidget {
+  const _RequirementsTab({required this.requiredDocumentsFuture});
+
+  final Future<List<String>> requiredDocumentsFuture;
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<String>>(
+      future: requiredDocumentsFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 30),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final documents = snapshot.data ?? const <String>[];
+        if (documents.isEmpty) {
+          return const Text(
+            'No specific documents found yet. Tap Apply to create a checklist.',
+            style: TextStyle(color: Color(0xFF636B88), fontSize: 15),
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Required Documents',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF151A2A),
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...documents.map(
+              (document) => Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      CupertinoIcons.doc_on_doc,
+                      size: 16,
+                      color: Color(0xFF576086),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        document,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF1C243B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _CostsTab extends StatelessWidget {
+  const _CostsTab({required this.university});
+
+  final UniversityEntity university;
+
+  @override
+  Widget build(BuildContext context) {
+    final monthlyCost = university.livingCostPerMonthEur;
+    final yearlyCost = monthlyCost > 0 ? monthlyCost * 12 : 0;
+
+    return Column(
+      children: [
+        _FactCard(
+          title: 'Estimated Living Cost (Monthly)',
+          value: monthlyCost > 0 ? '€$monthlyCost' : 'N/A',
+        ),
+        const SizedBox(height: 10),
+        _FactCard(
+          title: 'Estimated Living Cost (Yearly)',
+          value: yearlyCost > 0 ? '€$yearlyCost' : 'N/A',
+        ),
+      ],
+    );
+  }
+}
+
+class _DatesTab extends StatelessWidget {
+  const _DatesTab();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: const Text(
+        'Application dates vary by program and intake. Open the Documents tab after applying to track your preparation progress.',
+        style: TextStyle(fontSize: 15, color: Color(0xFF616A89), height: 1.4),
       ),
     );
   }
