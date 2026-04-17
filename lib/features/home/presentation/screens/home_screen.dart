@@ -2,7 +2,9 @@ import 'package:abroadready/core/di/service_locator.dart';
 import 'package:abroadready/core/firestore/schemas/university_schema.dart';
 import 'package:abroadready/core/navigation/app_routes.dart';
 import 'package:abroadready/features/home/data/services/university_service.dart';
+import 'package:abroadready/features/home/presentation/widgets/upcoming_reminders_widget.dart';
 import 'package:abroadready/features/matches/presentation/screens/matches_screen.dart';
+import 'package:abroadready/features/reminder/presentation/reminder_tab_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -75,6 +77,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
+              // Upcoming reminders widget
+              const SizedBox(height: 8),
+              const UpcomingRemindersWidget(),
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
@@ -170,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildExploreTab(),
           const MatchesScreen(),
           const _TabPlaceholder(title: 'Documents'),
-          const _TabPlaceholder(title: 'Reminders'),
+          const ReminderTabScreen(),
         ],
       ),
       bottomNavigationBar: NavigationBar(
