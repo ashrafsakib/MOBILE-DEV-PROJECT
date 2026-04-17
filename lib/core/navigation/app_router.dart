@@ -40,6 +40,8 @@ class AppRouter {
         final university = settings.arguments as UniversityEntity;
         return _page(UniversityDetailScreen(university: university), settings);
       case AppRoutes.splash:
+      case AppRoutes.reminders:
+        return _page(const SplashScreen(), settings);
       default:
         return _page(const SplashScreen(), settings);
     }

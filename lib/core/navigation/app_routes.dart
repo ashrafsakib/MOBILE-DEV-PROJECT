@@ -12,4 +12,5 @@ class AppRoutes {
   static const String universitySearch = '/university-search';
   static const String universityList = '/university-list';
   static const String universityDetail = '/university-detail';
+  static const String reminders = '/reminders';
 }
