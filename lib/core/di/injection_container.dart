@@ -1,4 +1,5 @@
 import 'package:abroadready/features/auth/data/services/auth_service.dart';
+import 'package:abroadready/features/home/data/services/university_application_service.dart';
 import 'package:abroadready/features/home/data/services/university_service.dart';
 import 'package:abroadready/features/matches/data/datasources/matches_data_source.dart';
 import 'package:abroadready/features/matches/data/repositories/matches_repository_impl.dart';
@@ -45,6 +46,9 @@ void _registerDataSources() {
   );
   sl.registerLazySingleton<UniversityService>(
     () => UniversityService(firestore: sl()),
+  );
+  sl.registerLazySingleton<UniversityApplicationService>(
+    () => UniversityApplicationService(firestore: sl(), firebaseAuth: sl()),
   );
   sl.registerLazySingleton<UniversitySearchDataSource>(
     () => UniversitySearchDataSource(universityService: sl()),

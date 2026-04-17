@@ -3,6 +3,7 @@ import 'package:abroadready/core/firestore/schemas/university_schema.dart';
 import 'package:abroadready/core/navigation/app_routes.dart';
 import 'package:abroadready/features/home/data/services/university_service.dart';
 import 'package:abroadready/features/home/presentation/widgets/upcoming_reminders_widget.dart';
+import 'package:abroadready/features/home/presentation/screens/documents_screen.dart';
 import 'package:abroadready/features/matches/presentation/screens/matches_screen.dart';
 import 'package:abroadready/features/reminder/presentation/reminder_tab_screen.dart';
 import 'package:flutter/cupertino.dart';
@@ -176,6 +177,8 @@ class _HomeScreenState extends State<HomeScreen> {
           const MatchesScreen(),
           const _TabPlaceholder(title: 'Documents'),
           const ReminderTabScreen(),
+          const DocumentsScreen(),
+          const _TabPlaceholder(title: 'Reminders'),
         ],
       ),
       bottomNavigationBar: NavigationBar(
