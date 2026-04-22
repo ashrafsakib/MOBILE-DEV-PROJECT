@@ -148,7 +148,7 @@ class ProfileSetupBloc extends Bloc<ProfileSetupEvent, ProfileSetupState> {
         state.copyWith(
           status: ProfileSetupSubmissionStatus.initial,
           profile: profile,
-          currentStep: profile.isCompleted ? 1 : profile.currentStep,
+          currentStep: profile.currentStep,
         ),
       );
     } catch (_) {
